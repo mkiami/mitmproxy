@@ -312,6 +312,8 @@ class HttpStream(layer.Layer):
             else:
                 chunks = [event.data]
             for chunk in chunks:
+                if self.context.options.store_streamed_bodies:
+                    self.request_body_buf += chunk
                 yield SendHttp(RequestData(self.stream_id, chunk), self.context.server)
         elif isinstance(event, RequestTrailers):
             # we don't do anything further here, we wait for RequestEndOfMessage first to trigger the request hook.
@@ -324,10 +326,15 @@ class HttpStream(layer.Layer):
                 elif isinstance(chunks, bytes):
                     chunks = [chunks]
                 for chunk in chunks:
+                    if self.context.options.store_streamed_bodies:
+                        self.request_body_buf += chunk
                     yield SendHttp(
                         RequestData(self.stream_id, chunk), self.context.server
                     )
 
+            if self.context.options.store_streamed_bodies:
+                self.flow.request.data.content = bytes(self.request_body_buf)
+                self.request_body_buf.clear()
             self.flow.request.timestamp_end = time.time()
             yield HttpRequestHook(self.flow)
             self.client_state = self.state_done
@@ -433,6 +440,8 @@ class HttpStream(layer.Layer):
             else:
                 chunks = [event.data]
             for chunk in chunks:
+                if self.context.options.store_streamed_bodies:
+                    self.response_body_buf += chunk
                 yield SendHttp(ResponseData(self.stream_id, chunk), self.context.client)
         elif isinstance(event, ResponseTrailers):
             self.flow.response.trailers = event.trailers
@@ -445,9 +454,14 @@ class HttpStream(layer.Layer):
                 elif isinstance(chunks, bytes):
                     chunks = [chunks]
                 for chunk in chunks:
+                    if self.context.options.store_streamed_bodies:
+                        self.response_body_buf += chunk
                     yield SendHttp(
                         ResponseData(self.stream_id, chunk), self.context.client
                     )
+            if self.context.options.store_streamed_bodies:
+                self.flow.response.data.content = bytes(self.response_body_buf)
+                self.response_body_buf.clear()
             yield from self.send_response(already_streamed=True)
 
     @expect(ResponseData, ResponseTrailers, ResponseEndOfMessage)
