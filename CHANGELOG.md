@@ -18,6 +18,16 @@
   ([#7241](https://github.com/mitmproxy/mitmproxy/pull/7241), @mhils)
 - `browser.start` command now supports Firefox.
   ([#7239](https://github.com/mitmproxy/mitmproxy/pull/7239), @sujaldev)
+- Fix interaction of the `modify_headers` and `stream_large_bodies` options.
+  This may break users of `modify_headers` that rely on filters referencing the message body.
+  We expect this to be uncommon, but please make yourself heard if that's not the case.
+  ([#7286](https://github.com/mitmproxy/mitmproxy/pull/7286), @lukant)
+- Increase HTTP/2 default flow control window size.
+  ([#7317](https://github.com/mitmproxy/mitmproxy/pull/7317), @sujaldev)
+- Fix a crash when handling corrupted compressed body in savehar addon and its tests.
+  ([#7320](https://github.com/mitmproxy/mitmproxy/pull/7320), @8192bytes)
+- Remove dependency on `protobuf` library as it was no longer being used.
+  ([#7327](https://github.com/mitmproxy/mitmproxy/pull/7327), @matthew16550)
 
 ## 02 October 2024: mitmproxy 11.0.0
 
